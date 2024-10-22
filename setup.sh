@@ -24,16 +24,6 @@ REDIS_URL=redis://redis:6379/0
 EOT
 [ $? -eq 0 ] || exit_on_error "Failed to create .env file"
 
-# Create a Python virtual environment
-echo "Creating Python virtual environment..."
-python3.11 -m venv venv
-[ $? -eq 0 ] || exit_on_error "Failed to create Python virtual environment"
-
-# Activate the virtual environment
-echo "Activating Python virtual environment..."
-source venv/bin/activate
-pip install --upgrade pip
-[ $? -eq 0 ] || exit_on_error "Failed to activate Python virtual environment"
 
 # Install Django
 echo "Installing packages"
@@ -52,11 +42,29 @@ echo "from __future__ import absolute_import, unicode_literals" > __init__.py
 echo "__all__ = ('celery_app',)" >> __init__.py
 [ $? -eq 0 ] || exit_on_error "Failed to update __init__.py"
 
+# Update settings.py with Celery and Celery Beat configuration
+echo "Updating settings.py for Celery and Celery Beat..."
+SETTINGS_FILE="./settings.py"
+
 # Update settings.py
 echo "Updating settings.py..."
-echo "# Example for Redis" >> ./settings.py
-echo "CELERY_BROKER_URL = 'redis://redis:6379/0'" >> ./settings.py
-[ $? -eq 0 ] || exit_on_error "Failed to update settings.py"
+echo "# Example for Redis" >> $SETTINGS_FILE
+echo "CELERY_BROKER_URL = 'redis://redis:6379/0'" >> $SETTINGS_FILE
+
+# Add 'django_celery_beat' to INSTALLED_APPS
+if ! grep -q "django_celery_beat" $SETTINGS_FILE; then
+    sed -i "/INSTALLED_APPS = \[/a \ \ \ \ 'django_celery_beat'," $SETTINGS_FILE
+    echo "'django_celery_beat' added to INSTALLED_APPS."
+fi
+
+# Add Celery Beat Scheduler setting
+if ! grep -q "CELERY_BEAT_SCHEDULER" $SETTINGS_FILE; then
+    echo "CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'" >> $SETTINGS_FILE
+    echo "CELERY_BEAT_SCHEDULER added to settings.py."
+fi
+
+[ $? -eq 0 ] || exit_on_error "Failed to update settings.py for Celery Beat"
+
 
 # Create celery.py
 echo "Creating celery.py..."

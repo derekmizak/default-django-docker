@@ -37,5 +37,15 @@ services:
       - web
       - redis
 
+  celery-beat:
+    build: .
+    command: celery -A project beat -l info
+    depends_on:
+      - redis
+      - db
+    volumes:
+      - celery-beat-data:/code/celerybeat-schedule  # Mount volume for Celery Beat
+
 volumes:
   postgres_data:
+  celery-beat-data:
