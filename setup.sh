@@ -24,6 +24,16 @@ REDIS_URL=redis://redis:6379/0
 EOT
 [ $? -eq 0 ] || exit_on_error "Failed to create .env file"
 
+# Create a Python virtual environment
+echo "Creating Python virtual environment..."
+python3.11 -m venv venv
+[ $? -eq 0 ] || exit_on_error "Failed to create Python virtual environment"
+
+# Activate the virtual environment
+echo "Activating Python virtual environment..."
+source venv/bin/activate
+pip install --upgrade pip
+[ $? -eq 0 ] || exit_on_error "Failed to activate Python virtual environment"
 
 # Install Django
 echo "Installing packages"
